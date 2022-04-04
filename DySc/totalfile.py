@@ -185,7 +185,7 @@ def log_posterior(p, r, z, v, dv, hrf, rf):
 
 class rotationcurve:
     
-    def __init__(self, v, dv, r, z, hrt, rt, q, d = None, model = 3, 
+    def __init__(self, v, dv, r, z, hrt, rt, q = 0.25, d = None, model = 3, 
                  fro = True, nt = 1, simultaneous = True):
         
         ''' Class rotation curve
@@ -229,6 +229,13 @@ class rotationcurve:
         
         
     def fit(self, nw, nb, ns, Qcorner = True):
+        
+      #  a = np.arange(1,1000,0.5)
+       # b = np.arange(1,200,0.5)
+        #a = a/100
+   #     b = b/100
+    #    I = np.loadtxt('Int1.txt')
+     #   f = interp2d(a,b, z=I, fill_value=None )
         
         nwalkers = nw
         nburnin = nb
@@ -297,33 +304,27 @@ class rotationcurve:
                 self.elayer / self.bestfitro, self.bestfitmstar, self.bestfitmdisc, self.bestfitro,
                 self.aspectratio, self.typicalradius), c='black', lw=1, label='Model')
             ax.plot(self.radius, self.velocity, '.', c='orange')
-            
-            if (err = True):
+            if (err == True):
                 ax.errorbar(self.radius, self.velocity, yerr = self.errvelocity, c='r', lw=1.0, capsize=2.0,
-                            capthick=1.0, fmt=' ', label='Data')
+                 capthick=1.0, fmt=' ', label='Data')
                 
         if (self.model == 2):
-            ax.plot(self.radius, curve_total2 (self.radius / self.bestfitro,
-                self.elayer / self.bestfitro, self.bestfitmstar, 
-                self.aspectratio, self.typicalradius, , c='black', lw=1, label='Model')
+            ax.plot(self.radius, curve_total2(self.radius / self.typicalradius,
+                self.elayer / self.typicalradius, self.bestfitmstar,
+                self.aspectratio, self.typicalradius), c='black', lw=1, label='Model')
             ax.plot(self.radius, self.velocity, '.', c='orange')
-                    
-            if (err = True):
+            if (err == True):
                 ax.errorbar(self.radius, self.velocity, yerr = self.errvelocity, c='r', lw=1.0, capsize=2.0,
-                            capthick=1.0, fmt=' ', label='Data')
-                    
-                    
+                 capthick=1.0, fmt=' ', label='Data')
+                
         if (self.model == 1):
-            ax.plot(self.radius, curve_total1 (self.radius / self.bestfitro,
-                self.elayer / self.bestfitro, self.bestfitmstar, c='black', lw=1, label='Model')
+            ax.plot(self.radius, curve_total1(self.radius,
+                self.elayer, self.bestfitmstar), c='black', lw=1, label='Model')
             ax.plot(self.radius, self.velocity, '.', c='orange')
-                    
-            if (err = True):
+            if (err == True):
                 ax.errorbar(self.radius, self.velocity, yerr = self.errvelocity, c='r', lw=1.0, capsize=2.0,
-                            capthick=1.0, fmt=' ', label='Data')
-                    
+                 capthick=1.0, fmt=' ', label='Data')
+            
         ax.legend()
         ax.set_xlabel(r'Radius [au]', size=18)
         ax.set_ylabel(r'$v_\phi (R,z)$ [km/s]', size=18)
-            
-            
