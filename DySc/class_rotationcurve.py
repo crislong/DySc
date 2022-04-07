@@ -140,25 +140,25 @@ class rotationcurve:
         fig, (ax) = plt.subplots(1,1,figsize=(8,8))
     
         if (self.model == 3):
-            ax.plot(self.radius, curve_total_model(self.radius / self.bestfitro,
+            ax.plot(self.radius, myfunctions.curve_total_model(self.radius / self.bestfitro,
                 self.elayer / self.bestfitro, self.bestfitmstar, self.bestfitmdisc, self.bestfitro,
-                self.aspectratio, self.typicalradius), c='black', lw=1, label='Model')
+                self.aspectratio, self.typicalradius, self.plcoefficient), c='black', lw=1, label='Model')
             ax.plot(self.radius, self.velocity, '.', c='orange')
             if (err == True):
                 ax.errorbar(self.radius, self.velocity, yerr = self.errvelocity, c='r', lw=1.0, capsize=2.0,
                  capthick=1.0, fmt=' ', label='Data')
                 
         if (self.model == 2):
-            ax.plot(self.radius, curve_total2(self.radius / self.typicalradius,
+            ax.plot(self.radius, myfunctions.curve_total2(self.radius / self.typicalradius,
                 self.elayer / self.typicalradius, self.bestfitmstar,
-                self.aspectratio, self.typicalradius), c='black', lw=1, label='Model')
+                self.aspectratio, self.typicalradius, self.plcoefficient), c='black', lw=1, label='Model')
             ax.plot(self.radius, self.velocity, '.', c='orange')
             if (err == True):
                 ax.errorbar(self.radius, self.velocity, yerr = self.errvelocity, c='r', lw=1.0, capsize=2.0,
                  capthick=1.0, fmt=' ', label='Data')
                 
         if (self.model == 1):
-            ax.plot(self.radius, curve_total1(self.radius,
+            ax.plot(self.radius, myfunctions.curve_total1(self.radius,
                 self.elayer, self.bestfitmstar), c='black', lw=1, label='Model')
             ax.plot(self.radius, self.velocity, '.', c='orange')
             if (err == True):
