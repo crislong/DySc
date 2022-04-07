@@ -38,11 +38,11 @@ def vstar (x, y):
     return x**2 / (x**2 + y**2)**(3/2)
 
 
-def vp (x, y, hrf, rf, ro):
+def vp (x, y, hrf, rf, ro, q):
     
-    c1 =  1 + 0.25 + 3/2
-    c2 = 3/2 - 0.25
-    delta = 2 * 0.25 - 1
+    c1 =  1 + q + 3/2
+    c2 = 3/2 - q
+    delta = 2 * q - 1
     return - x**(-1) * (c1 * hrf**2 * x**(-1*delta) * (rf/ro)**(-1*delta) - c2 * (y/x)**2)
 
 
@@ -64,10 +64,10 @@ def vdisco (x, y):
 
 
 
-def curve_total_model (x, y, mstar, mdisc, ro, hrf, rf):
+def curve_total_model (x, y, mstar, mdisc, ro, hrf, rf, q):
     
     star = v0 (mstar, ro) * vstar (x, y)
-    press = v0 (mstar, ro) * vp (x, y, hrf, rf, ro) 
+    press = v0 (mstar, ro) * vp (x, y, hrf, rf, ro, q) 
     disc = vd (mdisc, ro) * vdisco (x, y)
     return (star + press + disc) ** 0.5
 
@@ -110,17 +110,17 @@ def log_posterior1(p, r, z, v, dv):
 
 # ____ Model Star + PG _____
 
-def curve_total2 (x, y, mstar, hrf, rf):
+def curve_total2 (x, y, mstar, hrf, rf, q):
     
     star = v0 (mstar, rf) * vstar (x, y)
-    press = v0 (mstar, rf) * vp (x, y, hrf, rf, rf) 
+    press = v0 (mstar, rf) * vp (x, y, hrf, rf, rf, q) 
     return (star + press) **0.5
 
 
-def log_likelihood2(p, r, z, v, dv, hrf, rf):
+def log_likelihood2(p, r, z, v, dv, hrf, rf, q):
     mstar = p
     
-    llkh2 = -0.5 * ((v - curve_total2 (r/rf, z/rf, mstar, hrf, rf))**2 /(dv**2)
+    llkh2 = -0.5 * ((v - curve_total2 (r/rf, z/rf, mstar, hrf, rf, q))**2 /(dv**2)
                   + np.log(2*np.pi*dv**2))   
     return np.sum(llkh2)
 
@@ -135,11 +135,11 @@ def log_prior2(p):
     
     
 
-def log_posterior2(p, r, z, v, dv, hrf, rf):
+def log_posterior2(p, r, z, v, dv, hrf, rf, q):
     
     lp2 = log_prior2(p)
     if np.isfinite(lp2):
-        return lp2 + log_likelihood2(p, r, z, v, dv, hrf, rf)
+        return lp2 + log_likelihood2(p, r, z, v, dv, hrf, rf, q)
     else:
         return lp2
 # _____________________________________________________________
@@ -147,18 +147,18 @@ def log_posterior2(p, r, z, v, dv, hrf, rf):
 
 # ____ Model Star + PG + SG _____
 
-def curve_total (x, y, mstar, mdisc, ro, hrf, rf):
+def curve_total (x, y, mstar, mdisc, ro, hrf, rf, q):
     
     star = v0 (mstar, ro) * vstar (x, y)
-    press = v0 (mstar, ro) * vp (x, y, hrf, rf, ro) 
+    press = v0 (mstar, ro) * vp (x, y, hrf, rf, ro, q) 
     disc = vd (mdisc, ro) * vdisc (x, y)
     return (star + press + disc) **0.5
 
 
-def log_likelihood(p, r, z, v, dv, hrf, rf):
+def log_likelihood(p, r, z, v, dv, hrf, rf, q):
     mstar, mdisc, ro = p
     
-    llkh = -0.5 * ((v - curve_total (r/ro, z/ro, mstar, mdisc, ro, hrf, rf))**2 /(dv**2)
+    llkh = -0.5 * ((v - curve_total (r/ro, z/ro, mstar, mdisc, ro, hrf, rf, q))**2 /(dv**2)
                   + np.log(2*np.pi*dv**2))   
     return np.sum(llkh)
 
@@ -172,11 +172,11 @@ def log_prior(p):
         return -np.log(1)
 
     
-def log_posterior(p, r, z, v, dv, hrf, rf):
+def log_posterior(p, r, z, v, dv, hrf, rf, q):
     
     lp = log_prior(p)
     if np.isfinite(lp):
-        return lp + log_likelihood(p, r, z, v, dv, hrf, rf)
+        return lp + log_likelihood(p, r, z, v, dv, hrf, rf, q)
     else:
         return lp
 # _____________________________________________________________
