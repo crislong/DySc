@@ -168,4 +168,3 @@ class rotationcurve:
         ax.legend()
         ax.set_xlabel(r'Radius [au]', size=18)
         ax.set_ylabel(r'$v_\phi (R)$ [km/s]', size=18)
-            
