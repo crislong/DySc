@@ -129,25 +129,24 @@ def log_posterior1(p, r, z, v, dv):
 
 # ____ Model Star + PG _____
 
-def curve_total2 (x, y, mstar, hrf, rf, q):
+def curve_total2 (x, y, mstar,  hrf, rf, ro, q):
     
-    star = v0 (mstar, rf) * vstar (x, y)
-    press = v0 (mstar, rf) * vp (x, y, hrf, rf, rf, q) 
-    return (star + press) **0.5
+    
+    return (v0 (mstar, ro) * vpstar (x, y, hrf, rf, ro, q) ) **0.5
 
 
 def log_likelihood2(p, r, z, v, dv, hrf, rf, q):
-    mstar = p
+    mstar, ro = p
     
-    llkh2 = -0.5 * ((v - curve_total2 (r/rf, z/rf, mstar, hrf, rf, q))**2 /(dv**2)
+    llkh2 = -0.5 * ((v - curve_total2 (r/ro, z/ro, mstar, hrf, rf, ro, q))**2 /(dv**2)
                   + np.log(2*np.pi*dv**2))   
     return np.sum(llkh2)
 
 
 def log_prior2(p):
     
-    mstar = p
-    if (mstar < 0) or (mstar > 5):
+    mstar, ro = p
+    if (mstar < 0) or (mstar > 5) or (ro < 50.) or (ro > 500.):
         return -np.inf
     else:
         return -np.log(1)

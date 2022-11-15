@@ -101,8 +101,8 @@ class rotationcurve:
             self.bestfitro = np.quantile(sampler.flatchain[:,2], 0.5)
             
         if (self.model == 2):
-            ndim = 1
-            pos = np.random.uniform(low=[0.5], high=[1.5], size=(nwalkers, ndim))
+            ndim = 2
+            pos = np.random.uniform(low=[0.5, 200], high=[1.5, 300], size=(nwalkers, ndim))
             sampler = emcee.EnsembleSampler(nwalkers, ndim, myfunctions.log_posterior2, 
                 args=(self.radius, self.elayer, self.velocity, self.errvelocity,
                           self.aspectratio, self.typicalradius, self.plcoefficient) )
@@ -111,11 +111,12 @@ class rotationcurve:
             sampler.run_mcmc(state, nsteps, progress=True)
             if (Qcorner == True):
                 corner.corner(sampler.flatchain, bins=100, quantiles=[0.025, 0.5, 0.975], show_titles=True, 
-                titles=[r"$M_{\star}$"], 
-                labels=[r"$M_{\star}$"], 
+                titles=[r"$M_{\star}$",r"$R_{\rm c}$"], 
+                labels=[r"$M_{\star}$",r"$R_{\rm c}$"], 
                 title_kwargs={"fontsize": 12}, label_kwargs={"fontsize": 15}, title_fmt='.5f');
             
-            self.bestfitmstar = np.quantile(sampler.flatchain[:], 0.5)
+            self.bestfitmstar = np.quantile(sampler.flatchain[:,0], 0.5)
+            self.bestfitro = np.quantile(sampler.flatchain[:,1], 0.5)
                 
                 
         if (self.model == 1):
@@ -149,9 +150,9 @@ class rotationcurve:
                  capthick=1.0, fmt=' ', label='Data')
                 
         if (self.model == 2):
-            ax.plot(self.radius, myfunctions.curve_total2(self.radius / self.typicalradius,
-                self.elayer / self.typicalradius, self.bestfitmstar,
-                self.aspectratio, self.typicalradius, self.plcoefficient), c='black', lw=1, label='Model')
+            ax.plot(self.radius, myfunctions.curve_total2(self.radius / self.bestfitro,
+                self.elayer / self.bestfitro, self.bestfitmstar,
+                self.aspectratio, self.typicalradius,self.bestfitro, self.plcoefficient), c='black', lw=1, label='Model')
             ax.plot(self.radius, self.velocity, '.', c='orange')
             if (err == True):
                 ax.errorbar(self.radius, self.velocity, yerr = self.errvelocity, c='r', lw=1.0, capsize=2.0,
