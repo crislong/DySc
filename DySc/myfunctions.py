@@ -224,37 +224,3 @@ def log_posterior_sim(p, r, z, v, dv, hrf, rf, q, r2, z2, v2, dv2):
     else:
         return lp
 # _____________________________________________________________
-
-'''# ____ Model Star + PG _____
-
-def curve_total4 (x, y, mstar, ro, hrf, rf, q):
-    
-    star_press = v0 (mstar, ro) * vpstar (x, y, hrf, rf, ro, q) 
-    return (star_press) **0.5
-
-
-def log_likelihood4(p, r, z, v, dv, hrf, rf, q):
-    mstar, ro = p
-    
-    llkh = -0.5 * ((v - curve_total4 (r/ro, z/ro, mstar, ro, hrf, rf, q))**2 /(dv**2)
-                  + np.log(2*np.pi*dv**2))   
-    return np.sum(llkh)
-
-
-def log_prior4(p):
-    
-    mstar, ro = p
-    if (mstar < 0) or (mstar > 5) or (ro < 150) or (ro > 300):
-        return -np.inf
-    else:
-        return -np.log(1)
-
-    
-def log_posterior4(p, r, z, v, dv, hrf, rf, q):
-    
-    lp = log_prior4(p)
-    if np.isfinite(lp):
-        return lp + log_likelihood4(p, r, z, v, dv, hrf, rf, q)
-    else:
-        return lp
-'''
