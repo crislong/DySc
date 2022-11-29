@@ -124,6 +124,14 @@ def log_posterior1(p, r, z, v, dv):
         return lp1 + log_likelihood1(p, r, z, v, dv)
     else:
         return lp1
+
+def log_posterior1_sim(p, r, z, v, dv, r2, z2, v2, dv2):
+
+    lp1 = log_prior1(p)
+    if np.isfinite(lp1):
+        return lp1 + log_likelihood1(p, r, z, v, dv) + log_likelihood1(p, r2, z2, v2, dv2)
+    else:
+        return lp1
 # _____________________________________________________________
 
 
@@ -151,13 +159,21 @@ def log_prior2(p):
     else:
         return -np.log(1)
     
-    
 
 def log_posterior2(p, r, z, v, dv, hrf, rf, q):
     
     lp2 = log_prior2(p)
     if np.isfinite(lp2):
         return lp2 + log_likelihood2(p, r, z, v, dv, hrf, rf, q)
+    else:
+        return lp2
+
+
+def log_posterior2_sim(p, r, z, v, dv, hrf, rf, q, r2, z2, v2, dv2):
+    
+    lp2 = log_prior2(p)
+    if np.isfinite(lp2):
+        return lp2 + log_likelihood2(p, r, z, v, dv, hrf, rf, q) + log_likelihood2(p, r2, z2, v2, dv2, hrf, rf, q)
     else:
         return lp2
 # _____________________________________________________________
@@ -198,14 +214,21 @@ def log_posterior(p, r, z, v, dv, hrf, rf, q):
         return lp + log_likelihood(p, r, z, v, dv, hrf, rf, q)
     else:
         return lp
+
+
+def log_posterior_sim(p, r, z, v, dv, hrf, rf, q, r2, z2, v2, dv2):
+    
+    lp = log_prior(p)
+    if np.isfinite(lp):
+        return lp + log_likelihood(p, r, z, v, dv, hrf, rf, q) + log_likelihood(p, r2, z2, v2, dv2, hrf, rf, q)
+    else:
+        return lp
 # _____________________________________________________________
 
-# ____ Model Star + PG + SG _____
+'''# ____ Model Star + PG _____
 
 def curve_total4 (x, y, mstar, ro, hrf, rf, q):
     
-    #star = v0 (mstar, ro) * vstar (x, y)
-    #press = v0 (mstar, ro) * vp (x, y, hrf, rf, ro, q) 
     star_press = v0 (mstar, ro) * vpstar (x, y, hrf, rf, ro, q) 
     return (star_press) **0.5
 
@@ -234,3 +257,4 @@ def log_posterior4(p, r, z, v, dv, hrf, rf, q):
         return lp + log_likelihood4(p, r, z, v, dv, hrf, rf, q)
     else:
         return lp
+'''

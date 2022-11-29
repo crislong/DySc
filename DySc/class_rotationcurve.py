@@ -20,7 +20,8 @@ import myfunctions
 class rotationcurve:
     
     def __init__(self, v, dv, r, z, hrt, rt, q = 0.25, d = None, model = 3, 
-                 fro = True, nt = 1, simultaneous = True):
+                 fro = True, nt = 1, simultaneous = False, v2 = None, dv2 = None,
+                 r2 = None, z2 = None):
         
         ''' Class rotation curve
         v = input velocity vector [km/s]
@@ -46,7 +47,12 @@ class rotationcurve:
         self.outfit = fro
         self.ntracers = nt
         self.simultaneousfit = simultaneous
-        
+
+        self.velocity2 = v2
+        self.errvelocity2 = dv2
+        self.radius2 = r2
+        self.elayer2 = z2
+
         self.bestfitmstar = 0.
         self.bestfitmdisc = 0.
         self.bestfitro = 0.
@@ -82,90 +88,231 @@ class rotationcurve:
         nsteps = ns
         
         if (self.model == 3):
-            ndim = 3
-            pos = np.random.uniform(low=[0.5, 0.05, 50], high=[1.5, 0.15, 300], size=(nwalkers, ndim))
-            sampler = emcee.EnsembleSampler(nwalkers, ndim, myfunctions.log_posterior, 
-                args=(self.radius, self.elayer, self.velocity, self.errvelocity,
-                          self.aspectratio, self.typicalradius, self.plcoefficient) )
-            state = sampler.run_mcmc(pos, nburnin)
-            sampler.reset();
-            sampler.run_mcmc(state, nsteps, progress=True)
-            if (Qcorner == True):
-                corner.corner(sampler.flatchain, bins=100, quantiles=[0.025, 0.5, 0.975], show_titles=True, 
-                titles=[r"$M_{\star}$",r"$M_{\rm disc}$",r"$R_{\rm c}$"], 
-                labels=[r"$M_{\star}$",r"$M_{\rm disc}$",r"$R_{\rm c}$"], 
-                title_kwargs={"fontsize": 12}, label_kwargs={"fontsize": 15}, title_fmt='.5f');
+            
+            if(self.simultaneousfit == True):
+
+                ndim = 3
+                pos = np.random.uniform(low=[0.5, 0.05, 50], high=[1.5, 0.15, 300], size=(nwalkers, ndim))
+                sampler = emcee.EnsembleSampler(nwalkers, ndim, myfunctions.log_posterior_sim, 
+                 args=(self.radius, self.elayer, self.velocity, self.errvelocity,
+                          self.aspectratio, self.typicalradius, self.plcoefficient,
+                          self.radius2, self.elayer2, self.velocity2, self.errvelocity2))
+                state = sampler.run_mcmc(pos, nburnin)
+                sampler.reset();
+                sampler.run_mcmc(state, nsteps, progress=True)
+                if (Qcorner == True):
+                    corner.corner(sampler.flatchain, bins=100, quantiles=[0.025, 0.5, 0.975], show_titles=True, 
+                    titles=[r"$M_{\star}$",r"$M_{\rm disc}$",r"$R_{\rm c}$"], 
+                    labels=[r"$M_{\star}$",r"$M_{\rm disc}$",r"$R_{\rm c}$"], 
+                    title_kwargs={"fontsize": 12}, label_kwargs={"fontsize": 15}, title_fmt='.5f');
                 
-            self.bestfitmstar = np.quantile(sampler.flatchain[:,0], 0.5)
-            self.bestfitmdisc = np.quantile(sampler.flatchain[:,1], 0.5)
-            self.bestfitro = np.quantile(sampler.flatchain[:,2], 0.5)
+                self.bestfitmstar = np.quantile(sampler.flatchain[:,0], 0.5)
+                self.bestfitmdisc = np.quantile(sampler.flatchain[:,1], 0.5)
+                self.bestfitro = np.quantile(sampler.flatchain[:,2], 0.5)
+
+            else:
+
+                ndim = 3
+                pos = np.random.uniform(low=[0.5, 0.05, 50], high=[1.5, 0.15, 300], size=(nwalkers, ndim))
+                sampler = emcee.EnsembleSampler(nwalkers, ndim, myfunctions.log_posterior, 
+                    args=(self.radius, self.elayer, self.velocity, self.errvelocity,
+                          self.aspectratio, self.typicalradius, self.plcoefficient) )
+                state = sampler.run_mcmc(pos, nburnin)
+                sampler.reset();
+                sampler.run_mcmc(state, nsteps, progress=True)
+                if (Qcorner == True):
+                    corner.corner(sampler.flatchain, bins=100, quantiles=[0.025, 0.5, 0.975], show_titles=True, 
+                    titles=[r"$M_{\star}$",r"$M_{\rm disc}$",r"$R_{\rm c}$"], 
+                    labels=[r"$M_{\star}$",r"$M_{\rm disc}$",r"$R_{\rm c}$"], 
+                    title_kwargs={"fontsize": 12}, label_kwargs={"fontsize": 15}, title_fmt='.5f');
+                
+                self.bestfitmstar = np.quantile(sampler.flatchain[:,0], 0.5)
+                self.bestfitmdisc = np.quantile(sampler.flatchain[:,1], 0.5)
+                self.bestfitro = np.quantile(sampler.flatchain[:,2], 0.5)
             
         if (self.model == 2):
-            ndim = 2
-            pos = np.random.uniform(low=[0.5, 200], high=[1.5, 300], size=(nwalkers, ndim))
-            sampler = emcee.EnsembleSampler(nwalkers, ndim, myfunctions.log_posterior2, 
-                args=(self.radius, self.elayer, self.velocity, self.errvelocity,
-                          self.aspectratio, self.typicalradius, self.plcoefficient) )
-            state = sampler.run_mcmc(pos, nburnin)
-            sampler.reset();
-            sampler.run_mcmc(state, nsteps, progress=True)
-            if (Qcorner == True):
-                corner.corner(sampler.flatchain, bins=100, quantiles=[0.025, 0.5, 0.975], show_titles=True, 
-                titles=[r"$M_{\star}$",r"$R_{\rm c}$"], 
-                labels=[r"$M_{\star}$",r"$R_{\rm c}$"], 
-                title_kwargs={"fontsize": 12}, label_kwargs={"fontsize": 15}, title_fmt='.5f');
+
+            if(self.simultaneousfit == True):
+
+                ndim = 2
+                pos = np.random.uniform(low=[0.5, 200], high=[1.5, 300], size=(nwalkers, ndim))
+                sampler = emcee.EnsembleSampler(nwalkers, ndim, myfunctions.log_posterior2_sim, 
+                    args=(self.radius, self.elayer, self.velocity, self.errvelocity,
+                          self.aspectratio, self.typicalradius, self.plcoefficient, self.radius2,
+                          self.elayer2, self.velocity2, self.errvelocity2))
+                state = sampler.run_mcmc(pos, nburnin)
+                sampler.reset();
+                sampler.run_mcmc(state, nsteps, progress=True)
+                if (Qcorner == True):
+                    corner.corner(sampler.flatchain, bins=100, quantiles=[0.025, 0.5, 0.975], show_titles=True, 
+                    titles=[r"$M_{\star}$",r"$R_{\rm c}$"], 
+                    labels=[r"$M_{\star}$",r"$R_{\rm c}$"], 
+                    title_kwargs={"fontsize": 12}, label_kwargs={"fontsize": 15}, title_fmt='.5f');
             
-            self.bestfitmstar = np.quantile(sampler.flatchain[:,0], 0.5)
-            self.bestfitro = np.quantile(sampler.flatchain[:,1], 0.5)
+                self.bestfitmstar = np.quantile(sampler.flatchain[:,0], 0.5)
+                self.bestfitro = np.quantile(sampler.flatchain[:,1], 0.5)
+
+            else:
+                ndim = 2
+                pos = np.random.uniform(low=[0.5, 200], high=[1.5, 300], size=(nwalkers, ndim))
+                sampler = emcee.EnsembleSampler(nwalkers, ndim, myfunctions.log_posterior2, 
+                    args=(self.radius, self.elayer, self.velocity, self.errvelocity,
+                          self.aspectratio, self.typicalradius, self.plcoefficient))
+                state = sampler.run_mcmc(pos, nburnin)
+                sampler.reset();
+                sampler.run_mcmc(state, nsteps, progress=True)
+                if (Qcorner == True):
+                    corner.corner(sampler.flatchain, bins=100, quantiles=[0.025, 0.5, 0.975], show_titles=True, 
+                    titles=[r"$M_{\star}$",r"$R_{\rm c}$"], 
+                    labels=[r"$M_{\star}$",r"$R_{\rm c}$"], 
+                    title_kwargs={"fontsize": 12}, label_kwargs={"fontsize": 15}, title_fmt='.5f');
+            
+                self.bestfitmstar = np.quantile(sampler.flatchain[:,0], 0.5)
+                self.bestfitro = np.quantile(sampler.flatchain[:,1], 0.5)
                 
                 
         if (self.model == 1):
-            ndim = 1
-            pos = np.random.uniform(low=[0.5], high=[1.5], size=(nwalkers, ndim))
-            sampler = emcee.EnsembleSampler(nwalkers, ndim, myfunctions.log_posterior1, 
-                args=(self.radius, self.elayer, self.velocity, self.errvelocity) )
-            state = sampler.run_mcmc(pos, nburnin)
-            sampler.reset();
-            sampler.run_mcmc(state, nsteps, progress=True)
-            if (Qcorner == True):
-                corner.corner(sampler.flatchain, bins=100, quantiles=[0.025, 0.5, 0.975], show_titles=True, 
-                titles=[r"$M_{\star}$"], 
-                labels=[r"$M_{\star}$"], 
-                title_kwargs={"fontsize": 12}, label_kwargs={"fontsize": 15}, title_fmt='.5f');
+
+            if (self.simultaneousfit == True):
+
+                ndim = 1
+                pos = np.random.uniform(low=[0.5], high=[1.5], size=(nwalkers, ndim))
+                sampler = emcee.EnsembleSampler(nwalkers, ndim, myfunctions.log_posterior1_sim, 
+                    args=(self.radius, self.elayer, self.velocity, self.errvelocity,
+                        self.radius2, self.elayer2, self.velocity2, self.errvelocity2) )
+                state = sampler.run_mcmc(pos, nburnin)
+                sampler.reset();
+                sampler.run_mcmc(state, nsteps, progress=True)
+                if (Qcorner == True):
+                    corner.corner(sampler.flatchain, bins=100, quantiles=[0.025, 0.5, 0.975], show_titles=True, 
+                    titles=[r"$M_{\star}$"], 
+                    labels=[r"$M_{\star}$"], 
+                    title_kwargs={"fontsize": 12}, label_kwargs={"fontsize": 15}, title_fmt='.5f');
                 
-            self.bestfitmstar = np.quantile(sampler.flatchain[:], 0.5)
+                self.bestfitmstar = np.quantile(sampler.flatchain[:], 0.5)
+
+
+            else:
+                ndim = 1
+                pos = np.random.uniform(low=[0.5], high=[1.5], size=(nwalkers, ndim))
+                sampler = emcee.EnsembleSampler(nwalkers, ndim, myfunctions.log_posterior1, 
+                    args=(self.radius, self.elayer, self.velocity, self.errvelocity) )
+                state = sampler.run_mcmc(pos, nburnin)
+                sampler.reset();
+                sampler.run_mcmc(state, nsteps, progress=True)
+                if (Qcorner == True):
+                    corner.corner(sampler.flatchain, bins=100, quantiles=[0.025, 0.5, 0.975], show_titles=True, 
+                    titles=[r"$M_{\star}$"], 
+                    labels=[r"$M_{\star}$"], 
+                    title_kwargs={"fontsize": 12}, label_kwargs={"fontsize": 15}, title_fmt='.5f');
+                
+                self.bestfitmstar = np.quantile(sampler.flatchain[:], 0.5)
             
             
     def plot_model(self, err = True):
         
-        fig, (ax) = plt.subplots(1,1,figsize=(8,8))
+        if (self.simultaneousfit == True):
+
+            fig, (ax, ax1) = plt.subplots(1,2,figsize=(13,6))
+            ax.set_xlabel(r'R$_{12}$ [au]', size=18)
+            ax.set_ylabel(r'$v_{\phi,12}$ [km/s]', size=18)
+            ax1.set_xlabel(r'R$_{13}$ [au]', size=18)
+            ax1.set_ylabel(r'$v_{\phi,13}$ [km/s]', size=18)
+
+        else: 
+
+            fig, (ax) = plt.subplots(1,1,figsize=(8,8))
+            ax.set_xlabel(r'R [au]', size=18)
+            ax.set_ylabel(r'$v_{\phi}$ [km/s]', size=18)
     
         if (self.model == 3):
-            ax.plot(self.radius, myfunctions.curve_total_model(self.radius / self.bestfitro,
-                self.elayer / self.bestfitro, self.bestfitmstar, self.bestfitmdisc, self.bestfitro,
-                self.aspectratio, self.typicalradius, self.plcoefficient), c='black', lw=1, label='Model')
-            ax.plot(self.radius, self.velocity, '.', c='orange')
-            if (err == True):
-                ax.errorbar(self.radius, self.velocity, yerr = self.errvelocity, c='r', lw=1.0, capsize=2.0,
-                 capthick=1.0, fmt=' ', label='Data')
+
+            if (self.simultaneousfit == True):
+                ax.plot(self.radius, myfunctions.curve_total_model(self.radius / self.bestfitro,
+                    self.elayer / self.bestfitro, self.bestfitmstar, self.bestfitmdisc, self.bestfitro,
+                    self.aspectratio, self.typicalradius, self.plcoefficient), c='black', lw=1, label='Model')
+                ax.plot(self.radius, self.velocity, '.', c='orange')
+                if (err == True):
+                    ax.errorbar(self.radius, self.velocity, yerr = self.errvelocity, c='r', lw=1.0, capsize=2.0,
+                    capthick=1.0, fmt=' ', label='Data')
+                #second plot
+                ax1.plot(self.radius2, myfunctions.curve_total_model(self.radius2 / self.bestfitro,
+                    self.elayer2 / self.bestfitro, self.bestfitmstar, self.bestfitmdisc, self.bestfitro,
+                    self.aspectratio, self.typicalradius, self.plcoefficient), c='black', lw=1, label='Model')
+                ax1.plot(self.radius2, self.velocity2, '.', c='orange')
+                if (err == True):
+                    ax1.errorbar(self.radius2, self.velocity2, yerr = self.errvelocity2, c='r', lw=1.0, capsize=2.0,
+                    capthick=1.0, fmt=' ', label='Data')
+                ax.legend()
+                ax1.legend()
+
+            else:
+                ax.plot(self.radius, myfunctions.curve_total_model(self.radius / self.bestfitro,
+                    self.elayer / self.bestfitro, self.bestfitmstar, self.bestfitmdisc, self.bestfitro,
+                    self.aspectratio, self.typicalradius, self.plcoefficient), c='black', lw=1, label='Model')
+                ax.plot(self.radius, self.velocity, '.', c='orange')
+                if (err == True):
+                    ax.errorbar(self.radius, self.velocity, yerr = self.errvelocity, c='r', lw=1.0, capsize=2.0,
+                    capthick=1.0, fmt=' ', label='Data')
+                ax.legend()
                 
         if (self.model == 2):
-            ax.plot(self.radius, myfunctions.curve_total2(self.radius / self.bestfitro,
-                self.elayer / self.bestfitro, self.bestfitmstar,
-                self.aspectratio, self.typicalradius,self.bestfitro, self.plcoefficient), c='black', lw=1, label='Model')
-            ax.plot(self.radius, self.velocity, '.', c='orange')
-            if (err == True):
-                ax.errorbar(self.radius, self.velocity, yerr = self.errvelocity, c='r', lw=1.0, capsize=2.0,
-                 capthick=1.0, fmt=' ', label='Data')
+
+            if (self.simultaneousfit == True):
+                ax.plot(self.radius, myfunctions.curve_total2(self.radius / self.bestfitro,
+                    self.elayer / self.bestfitro, self.bestfitmstar,
+                    self.aspectratio, self.typicalradius,self.bestfitro, self.plcoefficient), c='black', lw=1, label='Model')
+                ax.plot(self.radius, self.velocity, '.', c='orange')
+                if (err == True):
+                    ax.errorbar(self.radius, self.velocity, yerr = self.errvelocity, c='r', lw=1.0, capsize=2.0,
+                    capthick=1.0, fmt=' ', label='Data')
+                #second plot
+                ax1.plot(self.radius2, myfunctions.curve_total2(self.radius2 / self.bestfitro,
+                    self.elayer2 / self.bestfitro, self.bestfitmstar,
+                    self.aspectratio, self.typicalradius,self.bestfitro, self.plcoefficient), c='black', lw=1, label='Model')
+                ax1.plot(self.radius2, self.velocity2, '.', c='orange')
+                if (err == True):
+                    ax1.errorbar(self.radius2, self.velocity2, yerr = self.errvelocity2, c='r', lw=1.0, capsize=2.0,
+                    capthick=1.0, fmt=' ', label='Data')
+                ax.legend()
+                ax1.legend()
+
+
+            else:
+                ax.plot(self.radius, myfunctions.curve_total2(self.radius / self.bestfitro,
+                    self.elayer / self.bestfitro, self.bestfitmstar,
+                    self.aspectratio, self.typicalradius,self.bestfitro, self.plcoefficient), c='black', lw=1, label='Model')
+                ax.plot(self.radius, self.velocity, '.', c='orange')
+                if (err == True):
+                    ax.errorbar(self.radius, self.velocity, yerr = self.errvelocity, c='r', lw=1.0, capsize=2.0,
+                    capthick=1.0, fmt=' ', label='Data')
+                ax.legend()
                 
+
         if (self.model == 1):
-            ax.plot(self.radius, myfunctions.curve_total1(self.radius,
-                self.elayer, self.bestfitmstar), c='black', lw=1, label='Model')
-            ax.plot(self.radius, self.velocity, '.', c='orange')
-            if (err == True):
-                ax.errorbar(self.radius, self.velocity, yerr = self.errvelocity, c='r', lw=1.0, capsize=2.0,
-                 capthick=1.0, fmt=' ', label='Data')
-            
-        ax.legend()
-        ax.set_xlabel(r'Radius [au]', size=18)
-        ax.set_ylabel(r'$v_\phi (R)$ [km/s]', size=18)
+
+            if (self.simultaneousfit == True):
+                ax.plot(self.radius, myfunctions.curve_total1(self.radius,
+                    self.elayer, self.bestfitmstar), c='black', lw=1, label='Model')
+                ax.plot(self.radius, self.velocity, '.', c='orange')
+                if (err == True):
+                    ax.errorbar(self.radius, self.velocity, yerr = self.errvelocity, c='r', lw=1.0, capsize=2.0,
+                    capthick=1.0, fmt=' ', label='Data')
+                #second plot
+                ax1.plot(self.radius2, myfunctions.curve_total1(self.radius2,
+                    self.elayer2, self.bestfitmstar), c='black', lw=1, label='Model')
+                ax1.plot(self.radius2, self.velocity2, '.', c='orange')
+                if (err == True):
+                    ax1.errorbar(self.radius2, self.velocity2, yerr = self.errvelocity2, c='r', lw=1.0, capsize=2.0,
+                    capthick=1.0, fmt=' ', label='Data')
+                ax.legend()
+                ax1.legend()
+
+            else:
+                ax.plot(self.radius, myfunctions.curve_total1(self.radius,
+                    self.elayer, self.bestfitmstar), c='black', lw=1, label='Model')
+                ax.plot(self.radius, self.velocity, '.', c='orange')
+                if (err == True):
+                    ax.errorbar(self.radius, self.velocity, yerr = self.errvelocity, c='r', lw=1.0, capsize=2.0,
+                    capthick=1.0, fmt=' ', label='Data')
+                ax.legend()
