@@ -95,13 +95,18 @@ class rotationcurve:
             print('Error: Wrong number of model. Valid numbers are: 1 Star, 2 Star + PG, 3 Star + PG + SG.')
 
 
+        if (self.stratification == True):
+
+            self.plcoefficient = self.qmid / 2.
+
+
 
     #thermal stratification 
     def write_strat_files(self, num_molecule):
 
         myfunctions.write_stratification_files (self.radius, self.elayer, self.tmid, self.qmid, self.tatm,
                                                  self.qatm, self.z0, self.beta, self.alpha, 
-                                                 self.aspectratio * (100/self.typicalradius)**(-self.qmid/2 + 0.5), num_molecule)
+                                                 self.aspectratio * (100./self.typicalradius)**(-self.qmid/2 + 0.5), num_molecule)
         
         
         

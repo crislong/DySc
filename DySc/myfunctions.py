@@ -171,6 +171,54 @@ def write_stratification_files (radius, elayer, tmid100, q_mid, tatm100, q_atm, 
 
 
 
+def vpstar_strat12 (x, y, hrf, rf, ro, q):
+    
+    c1 =  1 + q + 3/2
+    delta = 2 * q - 1
+    f = np.loadtxt('f_12.txt')
+    integral_derivative = np.loadtxt('contrib_12.txt')
+    return x**-1 * (- f * (c1 + x - integral_derivative)* hrf**2 * x**(-1*delta) * (rf/ro)**(-1*delta) + (1 + (y/x)**2)**(-1.5))
+
+def vpstar_strat13 (x, y, hrf, rf, ro, q):
+    
+    c1 =  1 + q + 3/2
+    delta = 2 * q - 1
+    f = np.loadtxt('f_13.txt')
+    integral_derivative = np.loadtxt('contrib_13.txt')
+    return x**-1 * (- f * (c1 + x - integral_derivative)* hrf**2 * x**(-1*delta) * (rf/ro)**(-1*delta) + (1 + (y/x)**2)**(-1.5))
+
+def curve_total_model_strat12 (x, y, mstar, mdisc, ro, hrf, rf, q):
+    
+   # star = v0 (mstar, ro) * vstar (x, y)
+    #press = v0 (mstar, ro) * vp (x, y, hrf, rf, ro, q) 
+    star_press = v0 (mstar, ro) * vpstar_strat12 (x, y, hrf, rf, ro, q) 
+    disc = vd (mdisc, ro) * vdisco (x, y)
+    return (star_press + disc) ** 0.5
+
+def curve_total_model_strat13 (x, y, mstar, mdisc, ro, hrf, rf, q):
+    
+   # star = v0 (mstar, ro) * vstar (x, y)
+    #press = v0 (mstar, ro) * vp (x, y, hrf, rf, ro, q) 
+    star_press = v0 (mstar, ro) * vpstar_strat13 (x, y, hrf, rf, ro, q) 
+    disc = vd (mdisc, ro) * vdisco (x, y)
+    return (star_press + disc) ** 0.5
+
+def curve_total_model_strat12_nosg (x, y, mstar, ro, hrf, rf, q):
+    
+   # star = v0 (mstar, ro) * vstar (x, y)
+    #press = v0 (mstar, ro) * vp (x, y, hrf, rf, ro, q) 
+    star_press = v0 (mstar, ro) * vpstar_strat12 (x, y, hrf, rf, ro, q) 
+    #disc = vd (mdisc, ro) * vdisco (x, y)
+    return (star_press) ** 0.5
+
+
+def curve_total_model_strat13_nosg (x, y, mstar, ro, hrf, rf, q):
+    
+   # star = v0 (mstar, ro) * vstar (x, y)
+    #press = v0 (mstar, ro) * vp (x, y, hrf, rf, ro, q) 
+    star_press = v0 (mstar, ro) * vpstar_strat13 (x, y, hrf, rf, ro, q) 
+    #disc = vd (mdisc, ro) * vdisco (x, y)
+    return (star_press) ** 0.5
 
 
 # ____ Model only Star _____
@@ -231,6 +279,20 @@ def log_likelihood2(p, r, z, v, dv, hrf, rf, q):
                   + np.log(2*np.pi*dv**2))   
     return np.sum(llkh2)
 
+def log_likelihood2_strat12(p, r, z, v, dv, hrf, rf, q):
+    mstar, ro = p
+    
+    llkh2 = -0.5 * ((v - curve_total_model_strat12_nosg (r/ro, z/ro, mstar, hrf, rf, ro, q))**2 /(dv**2)
+                  + np.log(2*np.pi*dv**2))   
+    return np.sum(llkh2)
+
+def log_likelihood2_strat13(p, r, z, v, dv, hrf, rf, q):
+    mstar, ro = p
+    
+    llkh2 = -0.5 * ((v - curve_total_model_strat13_nosg (r/ro, z/ro, mstar, hrf, rf, ro, q))**2 /(dv**2)
+                  + np.log(2*np.pi*dv**2))   
+    return np.sum(llkh2)
+
 
 def log_prior2(p):
     
@@ -248,6 +310,22 @@ def log_posterior2(p, r, z, v, dv, hrf, rf, q):
         return lp2 + log_likelihood2(p, r, z, v, dv, hrf, rf, q)
     else:
         return lp2
+    
+def log_posterior2_strat_12(p, r, z, v, dv, hrf, rf, q):
+    
+    lp2 = log_prior2(p)
+    if np.isfinite(lp2):
+        return lp2 + log_likelihood2_strat12(p, r, z, v, dv, hrf, rf, q)
+    else:
+        return lp2
+    
+def log_posterior2_strat_13(p, r, z, v, dv, hrf, rf, q):
+    
+    lp2 = log_prior2(p)
+    if np.isfinite(lp2):
+        return lp2 + log_likelihood2_strat13(p, r, z, v, dv, hrf, rf, q)
+    else:
+        return lp2
 
 
 def log_posterior2_sim(p, r, z, v, dv, hrf, rf, q, r2, z2, v2, dv2):
@@ -255,6 +333,15 @@ def log_posterior2_sim(p, r, z, v, dv, hrf, rf, q, r2, z2, v2, dv2):
     lp2 = log_prior2(p)
     if np.isfinite(lp2):
         return lp2 + log_likelihood2(p, r, z, v, dv, hrf, rf, q) + log_likelihood2(p, r2, z2, v2, dv2, hrf, rf, q)
+    else:
+        return lp2
+    
+
+def log_posterior2_strat_sim(p, r, z, v, dv, hrf, rf, q, r2, z2, v2, dv2):
+    
+    lp2 = log_prior2(p)
+    if np.isfinite(lp2):
+        return lp2 + log_likelihood2_strat12(p, r, z, v, dv, hrf, rf, q) + log_likelihood2_strat13(p, r2, z2, v2, dv2, hrf, rf, q)
     else:
         return lp2
 # _____________________________________________________________
@@ -278,6 +365,20 @@ def log_likelihood(p, r, z, v, dv, hrf, rf, q):
                   + np.log(2*np.pi*dv**2))   
     return np.sum(llkh)
 
+def log_likelihood_strat_12(p, r, z, v, dv, hrf, rf, q):
+    mstar, mdisc, ro = p
+    
+    llkh = -0.5 * ((v - curve_total_model_strat12 (r/ro, z/ro, mstar, mdisc, ro, hrf, rf, q))**2 /(dv**2)
+                  + np.log(2*np.pi*dv**2))   
+    return np.sum(llkh)
+
+def log_likelihood_strat_13(p, r, z, v, dv, hrf, rf, q):
+    mstar, mdisc, ro = p
+    
+    llkh = -0.5 * ((v - curve_total_model_strat13 (r/ro, z/ro, mstar, mdisc, ro, hrf, rf, q))**2 /(dv**2)
+                  + np.log(2*np.pi*dv**2))   
+    return np.sum(llkh)
+
 
 def log_prior(p):
     
@@ -295,6 +396,22 @@ def log_posterior(p, r, z, v, dv, hrf, rf, q):
         return lp + log_likelihood(p, r, z, v, dv, hrf, rf, q)
     else:
         return lp
+    
+def log_posterior_strat_12(p, r, z, v, dv, hrf, rf, q):
+    
+    lp = log_prior(p)
+    if np.isfinite(lp):
+        return lp + log_likelihood_strat_12(p, r, z, v, dv, hrf, rf, q)
+    else:
+        return lp
+    
+def log_posterior_strat_13(p, r, z, v, dv, hrf, rf, q):
+    
+    lp = log_prior(p)
+    if np.isfinite(lp):
+        return lp + log_likelihood_strat_13(p, r, z, v, dv, hrf, rf, q)
+    else:
+        return lp
 
 
 def log_posterior_sim(p, r, z, v, dv, hrf, rf, q, r2, z2, v2, dv2):
@@ -302,6 +419,15 @@ def log_posterior_sim(p, r, z, v, dv, hrf, rf, q, r2, z2, v2, dv2):
     lp = log_prior(p)
     if np.isfinite(lp):
         return lp + log_likelihood(p, r, z, v, dv, hrf, rf, q) + log_likelihood(p, r2, z2, v2, dv2, hrf, rf, q)
+    else:
+        return lp
+    
+    
+def log_posterior_strat_sim(p, r, z, v, dv, hrf, rf, q, r2, z2, v2, dv2):
+    
+    lp = log_prior(p)
+    if np.isfinite(lp):
+        return lp + log_posterior_strat_12(p, r, z, v, dv, hrf, rf, q) + log_posterior_strat_13(p, r2, z2, v2, dv2, hrf, rf, q)
     else:
         return lp
 # _____________________________________________________________
