@@ -10,6 +10,7 @@ from scipy.integrate import quad
 from scipy.integrate import simps
 from scipy.interpolate import griddata, interp2d
 from scipy.special import ellipe,ellipk
+from functools import partial
 au = 1.5e13
 msun = 2e33
 Gcgs = 6.67e-8
@@ -21,7 +22,8 @@ class rotationcurve:
     
     def __init__(self, v, dv, r, z, hrt, rt, q = 0.25, d = None, model = 3, 
                  fro = True, nt = 1, simultaneous = False, v2 = None, dv2 = None,
-                 r2 = None, z2 = None):
+                 r2 = None, z2 = None, stratification = False, Tmid = None, Tatm = None,
+                 qmid = None, qatm = None, z0 = None, alpha = None, beta = None):
         
         ''' Class rotation curve
         v = input velocity vector [km/s]
@@ -47,12 +49,24 @@ class rotationcurve:
         self.outfit = fro
         self.ntracers = nt
         self.simultaneousfit = simultaneous
+        self.stratification = stratification
 
+        # simultaneous fit
         self.velocity2 = v2
         self.errvelocity2 = dv2
         self.radius2 = r2
         self.elayer2 = z2
 
+        # thermal stratification
+        self.tmid = Tmid
+        self.tatm = Tatm
+        self.qmid = qmid
+        self.qatm = qatm
+        self.z0 = z0
+        self.alpha = alpha
+        self.beta = beta
+
+        # best fit parameters
         self.bestfitmstar = 0.
         self.bestfitmdisc = 0.
         self.bestfitro = 0.
@@ -79,6 +93,16 @@ class rotationcurve:
                 
         if (self.model !=1 and self.model !=2 and self.model !=3):
             print('Error: Wrong number of model. Valid numbers are: 1 Star, 2 Star + PG, 3 Star + PG + SG.')
+
+
+
+    #thermal stratification 
+    def write_strat_files(self, num_molecule):
+
+        myfunctions.write_stratification_files (self.radius, self.elayer, self.tmid, self.qmid, self.tatm,
+                                                 self.qatm, self.z0, self.beta, self.alpha, 
+                                                 self.aspectratio * (100/self.typicalradius)**(-self.qmid/2 + 0.5), num_molecule)
+        
         
         
     def fit(self, nw, nb, ns, Qcorner = True):

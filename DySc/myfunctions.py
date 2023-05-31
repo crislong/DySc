@@ -10,6 +10,7 @@ from scipy.integrate import quad
 from scipy.integrate import simps
 from scipy.interpolate import griddata, interp2d
 from scipy.special import ellipe,ellipk
+from functools import partial
 au = 1.5e13
 msun = 2e33
 Gcgs = 6.67e-8
@@ -89,6 +90,86 @@ def curve_total_model (x, y, mstar, mdisc, ro, hrf, rf, q):
     star_press = v0 (mstar, ro) * vpstar (x, y, hrf, rf, ro, q) 
     disc = vd (mdisc, ro) * vdisco (x, y)
     return (star_press + disc) ** 0.5
+
+
+
+
+
+#____ Thermal stratification routines _____
+
+def keplerian2(mstar, radius):
+    
+    return Gcgs * msun * mstar / (radius * au)
+
+
+def keplerian_height2(mstar, radius, height):
+    
+    return Gcgs * msun * mstar * au**2 * radius**2 / ((radius**2 * au**2 + height**2 * au**2)**(3/2))
+
+
+def hr(hr100, radius, q):
+    
+    return hr100 * (radius/100)**(-q/2 + 0.5)
+
+def temperature(radius, q_t, t100):
+    
+    return t100 * (radius/100)**(-q_t)
+
+
+def zq(radius, z0, beta):
+    
+    return z0 * (radius/100)**beta
+
+
+def t_dullemond(radius, z, tmid100, q_mid, tatm100, q_atm, z0, beta, alpha):
+    
+    b = temperature(radius, q_atm, tatm100) / temperature(radius, q_mid, tmid100)
+    z_q = zq(radius, z0, beta)
+    return temperature(radius, q_mid, tmid100) * (1 + 0.5 * b**4 * (1+np.tanh(z/z_q - alpha)))**0.25
+
+
+def integrand_fg_strat(zp, radius, tmid100, q_mid, tatm100, q_atm, z0, beta, alpha):
+    
+    return zp / t_dullemond(radius, zp, tmid100, q_mid, tatm100, q_atm, z0, beta, alpha) * (1 + (zp/radius)**2 )**(-1.5)
+
+
+def ln_fg_strat(radius, z_vector, hr100, tmid100, q_mid, tatm100, q_atm, z0, beta, alpha):
+    
+    h02 = - (radius * hr(hr100, radius, q_mid))**2
+    grid_out = np.zeros([len(radius), len(z_vector)])
+    grid_coordinatesR = np.zeros([len(radius), len(z_vector)])
+    grid_coordinatesZ = np.zeros([len(radius), len(z_vector)])
+    
+    for i in range(len(radius)):
+        for j in range(len(z_vector)):
+            integrand_z = partial(integrand_fg_strat, radius = radius[i], tmid100 = tmid100, q_mid = q_mid, tatm100 = tatm100,
+                                 q_atm = q_atm, z0 = z0, beta = beta, alpha = alpha)
+            grid_out[i,j] = quad(integrand_z, 0, z_vector[j])[0] / h02[i]
+            grid_coordinatesR[i,j] = radius[i]
+            grid_coordinatesZ[i,j] = z_vector[j]
+
+    return (grid_out, grid_coordinatesR, grid_coordinatesZ)
+
+
+def write_stratification_files (radius, elayer, tmid100, q_mid, tatm100, q_atm, z0, beta, alpha, hr100, num_mol):
+
+    f = t_dullemond(radius, elayer, tmid100, q_mid, tatm100, q_atm, z0, beta, alpha) / temperature(radius, q_mid, tmid100)
+    a = ln_fg_strat(radius, np.linspace(0,radius[-1]/2,250), hr100, tmid100, q_mid, tatm100, q_atm, z0, beta, alpha)
+    derivative = np.gradient(a[0], axis=0)
+    contribution = griddata((a[1].flatten(), a[2].flatten()), derivative.flatten(), (radius,elayer)) * radius
+
+    file1 = open('f_' + num_mol + '.txt', 'w')
+    file2 = open('contrib_' + num_mol + '.txt', 'w')
+
+    for i in range(len(f)):
+
+        file1.write(str(f[i]) + '\n')
+        file2.write(str(contribution[i]) + '\n')
+
+    file1.close()
+    file2.close()
+
+
 
 
 
