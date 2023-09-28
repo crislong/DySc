@@ -427,7 +427,7 @@ def log_posterior_strat_sim(p, r, z, v, dv, hrf, rf, q, r2, z2, v2, dv2):
     
     lp = log_prior(p)
     if np.isfinite(lp):
-        return lp + log_posterior_strat_12(p, r, z, v, dv, hrf, rf, q) + log_posterior_strat_13(p, r2, z2, v2, dv2, hrf, rf, q)
+        return lp + log_likelihood_strat_12(p, r, z, v, dv, hrf, rf, q) + log_likelihood_strat_13(p, r2, z2, v2, dv2, hrf, rf, q)
     else:
         return lp
 # _____________________________________________________________
