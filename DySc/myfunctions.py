@@ -61,8 +61,8 @@ def vpstar (x, y, hrf, rf, ro, q):
     
     c1 =  1 + q + 3/2
     delta = 2 * q - 1
-    return x**-1 * (1 - c1 * hrf**2 * x**(-1*delta) * (rf/ro)**(-1*delta) - 2*q * (1 - 1/np.sqrt(1 + (y/x)**2)) - 
-                    hrf**2 * (rf/ro)**(-1*delta) * x**(1-delta))
+    return x**-1 * (1 - c1 * hrf**2 * x**(-1*delta) * (ro/rf)**(-1*delta) - 2*q * (1 - 1/np.sqrt(1 + (y/x)**2)) - 
+                    hrf**2 * (ro/rf)**(-1*delta) * x**(1-delta))
 
 
 def vdisc (x, y):
