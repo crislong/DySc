@@ -67,7 +67,7 @@ def vpstar (x, y, hrf, rf, ro, q):
 
 def vdisc (x, y):
     
-    return f(x,y)
+    return f(x,y)[0]
 
 
 def vdisco (x, y):
